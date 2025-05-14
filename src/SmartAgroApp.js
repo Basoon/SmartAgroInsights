@@ -44,12 +44,34 @@ export default function SmartAgroApp() {
     const highMoisture = data.filter(row => parseFloat(row["Wilgotność (%)"]) > 75).length;
     const lowEfficiency = data.filter(row => parseFloat(row["Wydajność (kg/h)"]) < 1200).length;
     const claySoil = data.filter(row => row["Typ gleby"] === "gliniasta").length;
+    const irrigation = data.filter(row => row["Nawadnianie"]?.toLowerCase() === "tak").length;
+    const fertilizationNitrogen = data.filter(row => row["Nawożenie"]?.toLowerCase().includes("azot")).length;
+    const cropTypeRzepak = data.filter(row => row["Rodzaj zasiewu"]?.toLowerCase().includes("rzepak")).length;
+    const regionNorth = data.filter(row => row["Lokalizacja"]?.toLowerCase().includes("północ")).length;
 
     let msg = "📊 Raport AI dla rolnika:\n\n";
-    msg += `Dane wskazują na ${highMoisture} przypadków wysokiej wilgotności (>75%).\n`;
-    msg += `Zidentyfikowano ${lowEfficiency} dni z niską wydajnością (<1200 kg/h).\n`;
-    if (claySoil > 10) msg += `Dominuje gleba gliniasta – zalecana zmiana płodozmianu lub dodatek wapna.\n`;
-    msg += `\n✅ Zalecenia:\n- Monitoruj wilgotność gleby i unikaj nadmiernego nawadniania.\n- Sprawdź jakość nawożenia przy niskiej wydajności.\n- Rozważ rzepak ozimy w regionach o wyższej wilgotności.\n`;
+    msg += `🔹 Wysoka wilgotność (>75%): ${highMoisture} przypadków\n`;
+    msg += `🔹 Niska wydajność (<1200 kg/h): ${lowEfficiency} przypadków\n`;
+    msg += `🔹 Dominacja gleby gliniastej: ${claySoil} rekordów\n`;
+    msg += `🔹 Użycie nawadniania: ${irrigation} razy\n`;
+    msg += `🔹 Nawóz azotowy: ${fertilizationNitrogen} zastosowań\n`;
+    msg += `🔹 Zasiew rzepaku: ${cropTypeRzepak} razy\n`;
+    msg += `🔹 Region północny: ${regionNorth} obserwacji\n\n`;
+
+    msg += "✅ Zalecenia:\n";
+    if (highMoisture > 5 && lowEfficiency > 5) {
+      msg += "- Ogranicz nawadnianie – występuje korelacja między wilgotnością a spadkiem wydajności.\n";
+    }
+    if (claySoil > 10) {
+      msg += "- Gleba gliniasta – rozważ wapnowanie lub zmianę uprawy.\n";
+    }
+    if (fertilizationNitrogen > 10 && lowEfficiency > 5) {
+      msg += "- Sprawdź skuteczność nawozu azotowego – możliwa nieskuteczność przy obecnych warunkach.\n";
+    }
+    if (regionNorth > 5 && cropTypeRzepak < 3) {
+      msg += "- Rozważ zwiększenie uprawy rzepaku ozimego na północy.\n";
+    }
+    msg += "\n📌 Wskazówki:\n- Monitoruj zmiany gleby i analizuj lokalne warunki pogodowe.\n- Dostosuj dawki nawożenia do rodzaju gleby i wilgotności.\n";
 
     setReport(msg);
   };
