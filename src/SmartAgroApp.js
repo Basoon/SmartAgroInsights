@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import LandscapeIcon from '@mui/icons-material/Landscape';
+import MapView from "./MapView";
 
 export default function SmartAgroApp() {
   const [data, setData] = useState([]);
@@ -36,6 +37,14 @@ export default function SmartAgroApp() {
         const parsed = result.data;
         setData(parsed);
         const detectedKeys = Object.keys(parsed[0] || {});
+
+    const requiredColumns = ["Pole", "Lokalizacja", "Wydajność (kg/h)", "Wilgotność (%)", "pH", "Mg", "Zn", "Fe", "Cu", "Mn"];
+    const missingColumns = requiredColumns.filter(col => !detectedKeys.includes(col));
+    if (missingColumns.length > 0) {
+      setSummary("❌ Brakuje kolumn: " + missingColumns.join(", "));
+      return;
+    }
+
         setKeys(detectedKeys);
         setSummary(`✅ Wczytano ${parsed.length} rekordów\n📊 Kolumny: ${detectedKeys.join(", ")}`);
       },
