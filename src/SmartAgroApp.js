@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Papa from "papaparse";
+import dynamic from "next/dynamic";
 import {
   Box,
   Typography,
@@ -16,7 +17,8 @@ import {
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import LandscapeIcon from '@mui/icons-material/Landscape';
-import MapView from "./MapView";
+
+const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
 export default function SmartAgroApp() {
   const [data, setData] = useState([]);
@@ -38,12 +40,12 @@ export default function SmartAgroApp() {
         setData(parsed);
         const detectedKeys = Object.keys(parsed[0] || {});
 
-    const requiredColumns = ["Pole", "Lokalizacja", "Wydajność (kg/h)", "Wilgotność (%)", "pH", "Mg", "Zn", "Fe", "Cu", "Mn"];
-    const missingColumns = requiredColumns.filter(col => !detectedKeys.includes(col));
-    if (missingColumns.length > 0) {
-      setSummary("❌ Brakuje kolumn: " + missingColumns.join(", "));
-      return;
-    }
+        const requiredColumns = ["Pole", "Lokalizacja", "Wydajność (kg/h)", "Wilgotność (%)", "pH", "Mg", "Zn", "Fe", "Cu", "Mn"];
+        const missingColumns = requiredColumns.filter(col => !detectedKeys.includes(col));
+        if (missingColumns.length > 0) {
+          setSummary("❌ Brakuje kolumn: " + missingColumns.join(", "));
+          return;
+        }
 
         setKeys(detectedKeys);
         setSummary(`✅ Wczytano ${parsed.length} rekordów\n📊 Kolumny: ${detectedKeys.join(", ")}`);
@@ -160,6 +162,11 @@ export default function SmartAgroApp() {
                   </Typography>
                 </Paper>
               )}
+            </Box>
+
+            <Box mt={5}>
+              <Typography variant="h6">5. Mapa pól</Typography>
+              <MapView data={data} />
             </Box>
           </>
         )}
