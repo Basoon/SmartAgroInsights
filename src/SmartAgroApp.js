@@ -19,6 +19,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "r
 import LandscapeIcon from '@mui/icons-material/Landscape';
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
+import AIPrediction from "./AIPrediction";
 
 export default function SmartAgroApp() {
   const [data, setData] = useState([]);
@@ -167,6 +168,10 @@ export default function SmartAgroApp() {
             <Box mt={5}>
               <Typography variant="h6">5. Mapa pól</Typography>
               <MapView data={data} />
+            </Box>
+
+            <Box mt={5}>
+              <AIPrediction data={data} />
             </Box>
           </>
         )}
