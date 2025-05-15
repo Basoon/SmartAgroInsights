@@ -2,11 +2,11 @@
   "name": "smartagro-insights",
   "version": "1.0.0",
   "private": true,
- "scripts": {
-  "preinstall": "npm install --legacy-peer-deps",
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start"
+  "scripts": {
+    "preinstall": "npm install --legacy-peer-deps",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -18,7 +18,7 @@
     "papaparse": "^5.4.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-leaflet": "^5.0.0",
+    "react-leaflet": "^4.2.1",
     "recharts": "^2.5.0"
   }
 }
