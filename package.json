@@ -2,10 +2,11 @@
   "name": "smartagro-insights",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+ "scripts": {
+  "preinstall": "npm install --legacy-peer-deps",
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
