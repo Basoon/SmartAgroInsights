@@ -8,7 +8,6 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
-  TextField,
   Paper
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
@@ -41,37 +40,72 @@ export default function SmartAgroApp() {
   const generateRecommendations = () => {
     if (data.length === 0) return;
 
-    const highMoisture = data.filter(row => parseFloat(row["Wilgotność (%)"]) > 75).length;
-    const lowEfficiency = data.filter(row => parseFloat(row["Wydajność (kg/h)"]) < 1200).length;
-    const claySoil = data.filter(row => row["Typ gleby"] === "gliniasta").length;
-    const irrigation = data.filter(row => row["Nawadnianie"]?.toLowerCase() === "tak").length;
-    const fertilizationNitrogen = data.filter(row => row["Nawożenie"]?.toLowerCase().includes("azot")).length;
-    const cropTypeRzepak = data.filter(row => row["Rodzaj zasiewu"]?.toLowerCase().includes("rzepak")).length;
-    const regionNorth = data.filter(row => row["Lokalizacja"]?.toLowerCase().includes("północ")).length;
+    const avgHumidity = data.reduce((acc, row) => acc + parseFloat(row["Wilgotność (%)"] || 0), 0) / data.length;
+    const avgYield = data.reduce((acc, row) => acc + parseFloat(row["Wydajność (kg/h)"] || 0), 0) / data.length;
+    const fields = [...new Set(data.map(row => row["Pole"]))];
+    const crops = [...new Set(data.map(row => row["Rodzaj zasiewu"]))];
+    const fertilizers = [...new Set(data.map(row => row["Nawożenie"]))];
+    const soils = [...new Set(data.map(row => row["Typ gleby"]))];
+    const failuresTotal = data.reduce((acc, row) => acc + parseInt(row["Liczba awarii"] || 0), 0);
+    const downtimesTotal = data.reduce((acc, row) => acc + parseInt(row["Czas przestoju (min)"] || 0), 0);
 
-    let msg = "📊 Raport AI dla rolnika:\n\n";
-    msg += `🔹 Wysoka wilgotność (>75%): ${highMoisture} przypadków\n`;
-    msg += `🔹 Niska wydajność (<1200 kg/h): ${lowEfficiency} przypadków\n`;
-    msg += `🔹 Dominacja gleby gliniastej: ${claySoil} rekordów\n`;
-    msg += `🔹 Użycie nawadniania: ${irrigation} razy\n`;
-    msg += `🔹 Nawóz azotowy: ${fertilizationNitrogen} zastosowań\n`;
-    msg += `🔹 Zasiew rzepaku: ${cropTypeRzepak} razy\n`;
-    msg += `🔹 Region północny: ${regionNorth} obserwacji\n\n`;
+    let msg = "📊 Szczegółowy raport AI:
 
-    msg += "✅ Zalecenia:\n";
-    if (highMoisture > 5 && lowEfficiency > 5) {
-      msg += "- Ogranicz nawadnianie – występuje korelacja między wilgotnością a spadkiem wydajności.\n";
+";
+
+    msg += `🔹 Średnia wilgotność gleby: ${avgHumidity.toFixed(1)}%
+`;
+    msg += `🔹 Średnia wydajność: ${avgYield.toFixed(1)} kg/h
+`;
+    msg += `🔹 Liczba pól w gospodarstwie: ${fields.length} (${fields.join(", ")})
+`;
+    msg += `🔹 Rodzaje zasiewów: ${crops.join(", ")}
+`;
+    msg += `🔹 Typy gleby: ${soils.join(", ")}
+`;
+    msg += `🔹 Typy nawożenia: ${fertilizers.join(", ")}
+`;
+    msg += `🔹 Łączny czas przestojów: ${downtimesTotal} min
+`;
+    msg += `🔹 Suma awarii: ${failuresTotal} zdarzeń
+
+`;
+
+    msg += "✅ Rekomendacje zagospodarowania gleby:
+";
+    if (avgHumidity > 75) {
+      msg += "- Gleba zbyt wilgotna – ogranicz nawadnianie i monitoruj drenaż.
+";
+    } else if (avgHumidity < 65) {
+      msg += "- Niska wilgotność – rozważ dodatkowe nawadnianie lub ściółkowanie.
+";
     }
-    if (claySoil > 10) {
-      msg += "- Gleba gliniasta – rozważ wapnowanie lub zmianę uprawy.\n";
+
+    if (avgYield < 1200) {
+      msg += "- Niska wydajność – sprawdź skuteczność nawożenia i jakość gleby.
+";
     }
-    if (fertilizationNitrogen > 10 && lowEfficiency > 5) {
-      msg += "- Sprawdź skuteczność nawozu azotowego – możliwa nieskuteczność przy obecnych warunkach.\n";
+
+    if (failuresTotal > 5 || downtimesTotal > 100) {
+      msg += "- Duża liczba awarii i przestojów – zalecany przegląd maszyn i szkolenie personelu.
+";
     }
-    if (regionNorth > 5 && cropTypeRzepak < 3) {
-      msg += "- Rozważ zwiększenie uprawy rzepaku ozimego na północy.\n";
-    }
-    msg += "\n📌 Wskazówki:\n- Monitoruj zmiany gleby i analizuj lokalne warunki pogodowe.\n- Dostosuj dawki nawożenia do rodzaju gleby i wilgotności.\n";
+
+    msg += "\n📈 Analiza rynkowa:
+";
+    msg += "- W sezonie 2025 zwiększa się zapotrzebowanie na rzepak i pszenicę – korzystne zmiany zasiewu.
+";
+    msg += "- Ceny nawozów azotowych wzrosły – rozważ zmianę na kompost lub fosforowe.
+";
+
+    msg += "\n📌 Wskazówki dla przyszłych działań:
+";
+    msg += "- Planuj płodozmian między polami.
+";
+    msg += "- Wykonuj analizę gleby co 3 miesiące.
+";
+    msg += "- Ustal harmonogram nawożenia względem prognoz pogodowych.
+";
 
     setReport(msg);
   };
