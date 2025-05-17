@@ -1,25 +1,16 @@
+
 import React, { useState } from "react";
 import Papa from "papaparse";
 import dynamic from "next/dynamic";
 import {
-  Box,
-  Typography,
-  Button,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Paper,
-  Container,
-  Divider,
-  Grid,
-  Avatar
+  Box, Typography, Button, Select, MenuItem,
+  InputLabel, FormControl, Paper, Container,
+  Divider, Grid, Avatar
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import LandscapeIcon from '@mui/icons-material/Landscape';
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
-import AIPrediction from "./AIPrediction";
 
 export default function SmartAgroApp() {
   const [data, setData] = useState([]);
@@ -38,18 +29,20 @@ export default function SmartAgroApp() {
       skipEmptyLines: true,
       complete: (result) => {
         const parsed = result.data;
-        setData(parsed);
         const detectedKeys = Object.keys(parsed[0] || {});
 
-        const requiredColumns = ["Pole", "Lokalizacja", "Wydajność (kg/h)", "Wilgotność (%)", "pH", "Mg", "Zn", "Fe", "Cu", "Mn"];
-        const missingColumns = requiredColumns.filter(col => !detectedKeys.includes(col));
-        if (missingColumns.length > 0) {
-          setSummary("❌ Brakuje kolumn: " + missingColumns.join(", "));
+        const required = ["Pole", "Lokalizacja", "Wydajność (kg/h)", "Wilgotność (%)", "pH", "Próchnica (%)", "P", "K", "Mg", "B", "Cu", "Zn", "Mn", "EC", "Struktura gleby", "Rodzaj zasiewu", "Nawożenie", "Typ gleby"];
+        const missing = required.filter(col => !detectedKeys.includes(col));
+
+        if (missing.length > 0) {
+          setSummary("❌ Brakuje kolumn: " + missing.join(", "));
           return;
         }
 
+        setData(parsed);
         setKeys(detectedKeys);
-        setSummary(`✅ Wczytano ${parsed.length} rekordów\n📊 Kolumny: ${detectedKeys.join(", ")}`);
+        setSummary(`✅ Wczytano ${parsed.length} rekordów
+📊 Kolumny: ${detectedKeys.join(", ")}`);
       },
     });
   };
@@ -57,39 +50,52 @@ export default function SmartAgroApp() {
   const generateRecommendations = () => {
     if (data.length === 0) return;
 
-    const avgHumidity = data.reduce((acc, row) => acc + parseFloat(row["Wilgotność (%)"] || 0), 0) / data.length;
-    const avgYield = data.reduce((acc, row) => acc + parseFloat(row["Wydajność (kg/h)"] || 0), 0) / data.length;
-    const fields = [...new Set(data.map(row => row["Pole"]))];
-    const crops = [...new Set(data.map(row => row["Rodzaj zasiewu"]))];
-    const fertilizers = [...new Set(data.map(row => row["Nawożenie"]))];
-    const soils = [...new Set(data.map(row => row["Typ gleby"]))];
-    const failuresTotal = data.reduce((acc, row) => acc + parseInt(row["Liczba awarii"] || 0), 0);
-    const downtimesTotal = data.reduce((acc, row) => acc + parseInt(row["Czas przestoju (min)"] || 0), 0);
+    const avg = (key) => data.reduce((acc, row) => acc + parseFloat(row[key] || 0), 0) / data.length;
 
-    let msg = `📊 Szczegółowy raport AI:\n\n`;
-    msg += `🔹 Średnia wilgotność gleby: ${avgHumidity.toFixed(1)}%\n`;
-    msg += `🔹 Średnia wydajność: ${avgYield.toFixed(1)} kg/h\n`;
-    msg += `🔹 Liczba pól w gospodarstwie: ${fields.length} (${fields.join(", ")})\n`;
-    msg += `🔹 Rodzaje zasiewów: ${crops.join(", ")}\n`;
-    msg += `🔹 Typy gleby: ${soils.join(", ")}\n`;
-    msg += `🔹 Typy nawożenia: ${fertilizers.join(", ")}\n`;
-    msg += `🔹 Łączny czas przestojów: ${downtimesTotal} min\n`;
-    msg += `🔹 Suma awarii: ${failuresTotal} zdarzeń\n\n`;
+    const avgPH = avg("pH");
+    const avgOrganic = avg("Próchnica (%)");
+    const avgEC = avg("EC");
+    const avgYield = avg("Wydajność (kg/h)");
+    const avgMoisture = avg("Wilgotność (%)");
 
-    msg += `✅ Rekomendacje zagospodarowania gleby:\n`;
-    if (avgHumidity > 75) msg += `- Gleba zbyt wilgotna – ogranicz nawadnianie i monitoruj drenaż.\n`;
-    if (avgHumidity < 65) msg += `- Niska wilgotność – rozważ dodatkowe nawadnianie lub ściółkowanie.\n`;
-    if (avgYield < 1200) msg += `- Niska wydajność – sprawdź skuteczność nawożenia i jakość gleby.\n`;
-    if (failuresTotal > 5 || downtimesTotal > 100) msg += `- Duża liczba awarii i przestojów – zalecany przegląd maszyn i szkolenie personelu.\n`;
+    let msg = "📊 Ekspercki raport AI na podstawie analizy gleby:
 
-    msg += `\n📈 Analiza rynkowa:\n`;
-    msg += `- W sezonie 2025 zwiększa się zapotrzebowanie na rzepak i pszenicę – korzystne zmiany zasiewu.\n`;
-    msg += `- Ceny nawozów azotowych wzrosły – rozważ zmianę na kompost lub fosforowe.\n`;
+";
+    msg += `🔹 Średnie pH: ${avgPH.toFixed(1)} (${avgPH < 5.5 ? "kwaśna" : avgPH < 7.5 ? "obojętna" : "zasadowa"})
+`;
+    msg += `🔹 Próchnica: ${avgOrganic.toFixed(1)}% (${avgOrganic < 1.5 ? "niska" : avgOrganic < 3.5 ? "średnia" : "wysoka"})
+`;
+    msg += `🔹 Zasolenie (EC): ${avgEC.toFixed(2)} dS/m ${avgEC > 3 ? "⚠️ wysoka zasolenie" : ""}
+`;
+    msg += `🔹 Średnia wilgotność gleby: ${avgMoisture.toFixed(1)}%
+`;
+    msg += `🔹 Średnia wydajność: ${avgYield.toFixed(1)} kg/h
 
-    msg += `\n📌 Wskazówki dla przyszłych działań:\n`;
-    msg += `- Planuj płodozmian między polami.\n`;
-    msg += `- Wykonuj analizę gleby co 3 miesiące.\n`;
-    msg += `- Ustal harmonogram nawożenia względem prognoz pogodowych.\n`;
+`;
+
+    msg += "✅ Rekomendacje rolnicze:
+";
+
+    if (avgPH < 5.5) msg += "- Odczyn kwaśny – zaleca się wapnowanie.
+";
+    if (avgPH > 7.5) msg += "- Odczyn zasadowy – ostrożnie z nawozami wapniowymi.
+";
+    if (avgOrganic < 1.5) msg += "- Niska próchnica – stosuj nawozy organiczne i międzyplony.
+";
+    if (avgEC > 3) msg += "- Zasolenie wysokie – ogranicz nawożenie mineralne i zwiększ nawadnianie.
+";
+    if (avgYield < 1000) msg += "- Niska wydajność – sprawdź niedobory makroskładników (P, K, Mg).
+";
+
+    msg += "
+📌 Wskazówki:
+";
+    msg += "- Monitoruj zmiany sezonowe gleb (np. wilgotność vs plony).
+";
+    msg += "- Ustal płodozmian zgodnie z typem gleby i poziomem próchnicy.
+";
+    msg += "- Dostosuj dawki nawozów mikroelementowych do wyników.
+";
 
     setReport(msg);
   };
@@ -105,7 +111,7 @@ export default function SmartAgroApp() {
           </Grid>
           <Grid item>
             <Typography variant="h4" fontWeight="bold">SmartAgro Insights</Typography>
-            <Typography color="text.secondary">Inteligentna analiza danych rolniczych (CSV)</Typography>
+            <Typography color="text.secondary">Ekspercka analiza laboratoryjna gleby (CSV)</Typography>
           </Grid>
         </Grid>
 
@@ -122,17 +128,13 @@ export default function SmartAgroApp() {
               <FormControl sx={{ mr: 2, minWidth: 160 }}>
                 <InputLabel>Oś X</InputLabel>
                 <Select value={xKey} onChange={(e) => setXKey(e.target.value)} label="Oś X">
-                  {keys.map((k) => (
-                    <MenuItem key={k} value={k}>{k}</MenuItem>
-                  ))}
+                  {keys.map((k) => (<MenuItem key={k} value={k}>{k}</MenuItem>))}
                 </Select>
               </FormControl>
               <FormControl sx={{ minWidth: 160 }}>
                 <InputLabel>Oś Y</InputLabel>
                 <Select value={yKey} onChange={(e) => setYKey(e.target.value)} label="Oś Y">
-                  {keys.map((k) => (
-                    <MenuItem key={k} value={k}>{k}</MenuItem>
-                  ))}
+                  {keys.map((k) => (<MenuItem key={k} value={k}>{k}</MenuItem>))}
                 </Select>
               </FormControl>
             </Box>
@@ -168,10 +170,6 @@ export default function SmartAgroApp() {
             <Box mt={5}>
               <Typography variant="h6">5. Mapa pól</Typography>
               <MapView data={data} />
-            </Box>
-
-            <Box mt={5}>
-              <AIPrediction data={data} />
             </Box>
           </>
         )}
